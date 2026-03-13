@@ -1,20 +1,37 @@
 from flask import Flask, render_template, request
 from groq import Groq
+import os
 
 app = Flask(__name__)
 
-# Groq API
-client = Groq(api_key="GROQ_API_KEY")
+# Load Groq API key from environment variable (Hugging Face Secrets)
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+
 
 def generate_quiz(topic, num_questions):
-    prompt = f"Generate {num_questions} MCQ questions on {topic} with 4 options and correct answer."
+    try:
+        prompt = f"""
+        Generate {num_questions} multiple choice questions on {topic}.
 
-    response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
-        messages=[{"role": "user", "content": prompt}]
-    )
+        Format:
+        Question
+        A)
+        B)
+        C)
+        D)
 
-    return response.choices[0].message.content
+        Correct Answer:
+        """
+
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": prompt}]
+        )
+
+        return response.choices[0].message.content
+
+    except Exception as e:
+        return f"Error generating quiz: {str(e)}"
 
 
 @app.route("/")
@@ -25,7 +42,7 @@ def home():
 @app.route("/generate", methods=["POST"])
 def generate():
     topic = request.form["topic"]
-    num_questions = request.form["num_questions"]
+    num_questions = int(request.form["num_questions"])
 
     quiz = generate_quiz(topic, num_questions)
 
@@ -33,4 +50,4 @@ def generate():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=7860)
