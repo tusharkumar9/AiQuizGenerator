@@ -1,11 +1,25 @@
 from flask import Flask, render_template, request
 from groq import Groq
+from dotenv import load_dotenv   # ✅ ADD THIS
 import os
+
+# ✅ Load .env file
+load_dotenv()
 
 app = Flask(__name__)
 
-# Load Groq API key from environment variable (Hugging Face Secrets)
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+# ✅ Get API key
+api_key = os.getenv("GROQ_API_KEY")
+
+# ✅ Debug (remove later if you want)
+print("API KEY:", api_key)
+
+# ❌ Stop app if key is missing
+if not api_key:
+    raise ValueError("GROQ_API_KEY is not set. Check your .env file.")
+
+# ✅ Create Groq client
+client = Groq(api_key=api_key)
 
 
 def generate_quiz(topic, num_questions):
